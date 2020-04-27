@@ -36,7 +36,7 @@ func handleEvent(e events.Message) {
 	case action == "start":
 		action = "is starting"
 	case action == "die":
-		action = "is die"
+		action = "is exiting"
 	case strings.Contains(action, "exec_start"):
 		action = "is exec-ing " + strings.TrimSpace(action[12:len(action)])
 	default:
@@ -44,7 +44,7 @@ func handleEvent(e events.Message) {
 		return
 	}
 
-	tmpl := "*%s* is %s:\n```\n%v\n```"
+	tmpl := "*%s* %s:\n```\n%v\n```"
 	buf, _ := json.Marshal(WebhookRequest{
 		Text: fmt.Sprintf(tmpl, name, action, e.Actor.Attributes),
 	})
