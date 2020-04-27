@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -17,12 +17,8 @@ import (
 )
 
 var (
-	flagWebhookUrl string
+	WebhookUrl = os.Getenv("WEBHOOK_URL")
 )
-
-type WebhookRequest struct {
-	Text string `json:"text"`
-}
 
 func handleEvent(e events.Message) {
 	log.Printf("action:%s %v", e.Action, e.Actor.Attributes)
@@ -45,11 +41,11 @@ func handleEvent(e events.Message) {
 	}
 
 	tmpl := "*%s* %s:\n```\n%v\n```"
-	buf, _ := json.Marshal(WebhookRequest{
-		Text: fmt.Sprintf(tmpl, name, action, e.Actor.Attributes),
+	buf, _ := json.Marshal(map[string]string{
+		"text": fmt.Sprintf(tmpl, name, action, e.Actor.Attributes),
 	})
 
-	resp, err := http.Post(flagWebhookUrl, "application/json", bytes.NewBuffer(buf))
+	resp, err := http.Post(WebhookUrl, "application/json", bytes.NewBuffer(buf))
 	if err != nil {
 		log.Printf("error submitting webhook: %s", err)
 		return
@@ -58,11 +54,8 @@ func handleEvent(e events.Message) {
 }
 
 func main() {
-	flag.StringVar(&flagWebhookUrl, "url", "", "webhook url")
-	flag.Parse()
-
-	if flagWebhookUrl == "" {
-		flag.Usage()
+	if WebhookUrl == "" {
+		log.Fatal("missing WEBHOOK_URL env variable")
 		return
 	}
 
